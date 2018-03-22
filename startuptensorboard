@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# startupjupyter version 1.1
+# startuptensorflow version 1.0
 
 ########### Licensing ####################
 #
@@ -40,66 +40,57 @@
 
 # Software Purpose
 
-# This is a bash script for launching a jupyter notebook from an interactive
+# This is a bash script for launching tensorboard from an interactive
 # node. It assumes that the user has local ssh terminals on their desktop. 
 # This works for GNU/Linux and MacOS users, but Windows does not have terminal
 # support by default outside of Cygwin and Ubuntu Windows 10 Feature users.
+
+# Single argument, the tensorboard log dir
 
 #store hostname in a string
 HOSTSTRPVT=`hostname`
 HOSTSTR=$(echo $HOSTSTRPVT | sed 's/pvt/opa/g')
 # if the user passes any command args at all, interpret it as a request for help
 
-if [ -z $1 ]; then
 # Only do this stuff on an interactive node. 
-	if [[ "$HOSTSTR" = br00?.opa.bridges.psc.edu ]]; then
-		echo "You are on" $HOSTSTR "which is a login node"
-		echo "You must be on an interactive node to run this software."
-        	echo "Type 'interact' at the prompt and try again"
-	else
+if [[ "$HOSTSTR" = br00?.opa.bridges.psc.edu ]]; then
+    echo "You are on" $HOSTSTR "which is a login node"
+    echo "You must be on an interactive node to run this software."
+    echo "Type 'interact' at the prompt and try again"
+else
 
 # Setup software paths
-        	module load tensorflow/1.5_gpu 
+    module load tensorflow/1.5_gpu
 
-# create directory. it doesn't hurt anything if it already exists.
-#		mkdir -p ~/.jupyter
-
-# Setup Jupyter rundir. Perhaps this step should move to a module.
-#		export JUPYTER_RUNTIME_DIR=~/.jupyter
-
-# change the directory, otherwise you are dumped into pwd
-#		cd ~/.jupyter
 
 # find the last port that someone used
-        	declare -i portnum=6006
+    declare -i portnum=6006
 
+    portused=$(netstat -nat | grep $portnum)
+
+	while [ ! -z "$portused" ]; do
+        echo $portused
+        portnum=portnum+1
 		portused=$(netstat -nat | grep $portnum)
-
-		while [ ! -z "$portused" ]; do
-			echo $portused
-			portnum=portnum+1
-			portused=$(netstat -nat | grep $portnum)
-			echo "new port assigned" $portnum
-     		done
+		echo "new port assigned" $portnum
+        done
  
 
 # User instructions
-		echo "Your Jupyter Notebook is ready for use."
-		echo "------------------------"
-		echo "Step 1:"
-		echo "Mac/Linux users: launch another terminal and paste the following command:"
-		echo "ssh -L $portnum:$HOSTSTR:$portnum bridges.psc.edu -l `whoami`"
-		echo "Windows users: run "cmd" then cd to yor PuTTY directory then pased the following command:"
-		echo "plink  -L $portnum:$HOSTSTR:$portnum bridges.psc.edu -l `whoami`"
-		echo "------------------------"
-		echo "Step 2: Open a browser on your computer to http://localhost:$portnum"
-		echo "Step 3: Enjoy Jupyter Notebook!"
+    echo "Tensorboard is ready for use."
+	echo "------------------------"
+	echo "Step 1:"
+	echo "Mac/Linux users: launch another terminal and paste the following command:"
+	echo "ssh -L $portnum:$HOSTSTR:$portnum bridges.psc.edu -l `whoami`"
+	echo "Windows users: run "cmd" then cd to yor PuTTY directory then pased the following command:"
+	echo "plink  -L $portnum:$HOSTSTR:$portnum bridges.psc.edu -l `whoami`"
+	echo "------------------------"
+	echo "Step 2: Open a browser on your computer to http://localhost:$portnum"
+	echo "Step 3: Enjoy Tensorboard!"
 
 
 # Launch the notebook
-        	tensorboard --logdir=/home/mbarnes/deep_spectral_clustering/exp/cityscapes/train_on_train_set/train/ --host=0.0.0.0 --port=$portnum 
-	fi
-	else
-	echo "This a command is to launch a jupyter notebook."
+    echo "Starting tensorboard in log dir: $1"
+    tensorboard --logdir=$1 --host=0.0.0.0 --port=$portnum
 fi
 #!/bin/bash`
